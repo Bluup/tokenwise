@@ -9,7 +9,7 @@ import { buildPayload } from './privacy.js';
 import { renderReport, renderCardSVG, c } from './render.js';
 import { SUBMISSIONS_URL, LEADERBOARD_URL, SUPABASE_ANON_KEY } from './config.js';
 
-const VERSION = '0.1.1';
+const VERSION = '0.1.2';
 
 interface Flags {
   cmd: string;
@@ -122,7 +122,7 @@ async function main(): Promise<number> {
     writeFileSync(out, svg, 'utf8');
     process.stdout.write(
       `\n  ${c.wise('✓')} Card written to ${c.bold('tokenwise-card.svg')}\n` +
-        `  ${c.dim('Score')} ${c.bold(String(report.efficiency.score))}${c.dim('/100')} · ${c.dim('share it and tag @bluudev')}\n\n`,
+        `  ${c.dim('Score')} ${c.bold(String(report.efficiency.score))}${c.dim('/100')} · ${c.dim('share it and tag @Bluup')}\n\n`,
     );
     return 0;
   }
