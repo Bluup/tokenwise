@@ -1,5 +1,5 @@
 /** Which AI coding tool a usage event came from. */
-export type ToolSource = 'claude-code' | 'codex';
+export type ToolSource = 'claude-code' | 'codex' | 'copilot';
 
 /** A single normalized usage event (one assistant turn). */
 export interface UsageEvent {

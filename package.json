@@ -1,6 +1,6 @@
 {
   "name": "tokenwise-cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "The efficiency layer for AI coding spend. Rank yourself by value shipped per dollar — not tokens burned. Open-source CLI; only anonymized aggregates ever leave your machine.",
   "type": "module",
   "license": "MIT",

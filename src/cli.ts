@@ -3,6 +3,7 @@ import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { collectClaudeCode } from './sources/claude-code.js';
 import { collectCodex } from './sources/codex.js';
+import { collectCopilot } from './sources/copilot.js';
 import { gitStats } from './git.js';
 import { CollectUsageUseCase } from './usecases/CollectUsageUseCase.js';
 import { buildPayload } from './privacy.js';
@@ -80,6 +81,7 @@ function buildReport(flags: Flags) {
   const useCase = new CollectUsageUseCase({
     collectClaudeCode,
     collectCodex,
+    collectCopilot,
     gitStats,
     cwd: process.cwd(),
   });

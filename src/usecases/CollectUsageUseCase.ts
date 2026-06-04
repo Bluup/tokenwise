@@ -11,12 +11,13 @@ export interface Report {
   /** 'project' = usage scoped to the current repo; 'all' = every project. */
   scope: 'project' | 'all';
   /** Whether each source contributed any events. */
-  sources: { claudeCode: number; codex: number };
+  sources: { claudeCode: number; codex: number; copilot: number };
 }
 
 export interface CollectDeps {
   collectClaudeCode: () => UsageEvent[];
   collectCodex: () => UsageEvent[];
+  collectCopilot: () => UsageEvent[];
   gitStats: (cwd: string, sinceDay: string | null) => GitStats;
   cwd: string;
   now?: Date;
@@ -47,7 +48,8 @@ export class CollectUsageUseCase {
     const git = this.deps.gitStats(this.deps.cwd, sinceDay);
     const claude = this.deps.collectClaudeCode();
     const codex = this.deps.collectCodex();
-    let costed = filterSince([...claude, ...codex].map(costEvent), sinceDay);
+    const copilot = this.deps.collectCopilot();
+    let costed = filterSince([...claude, ...codex, ...copilot].map(costEvent), sinceDay);
 
     const scopeToProject = !input.allProjects && git.repo != null;
     if (scopeToProject) {
@@ -67,6 +69,7 @@ export class CollectUsageUseCase {
       sources: {
         claudeCode: costed.filter((e) => e.source === 'claude-code').length,
         codex: costed.filter((e) => e.source === 'codex').length,
+        copilot: costed.filter((e) => e.source === 'copilot').length,
       },
     };
   }

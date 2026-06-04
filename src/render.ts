@@ -81,6 +81,7 @@ export function renderReport(r: Report): string {
   const srcs: string[] = [];
   if (r.sources.claudeCode) srcs.push(`Claude Code (${r.sources.claudeCode})`);
   if (r.sources.codex) srcs.push(`Codex (${r.sources.codex})`);
+  if (r.sources.copilot) srcs.push(`Copilot (${r.sources.copilot})`);
   lines.push(`  ${c.dim('Sources: ' + (srcs.join(', ') || 'none'))}`);
   lines.push(`  ${c.dim('Share your card:')} ${c.wise('npx tokenwise-cli share')}`);
   lines.push('');

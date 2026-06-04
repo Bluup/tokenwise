@@ -52,13 +52,20 @@ Run `tokenwise submit` to print the **exact** JSON that would be uploaded before
 
 ## How it works
 
-1. Reads local logs from **Claude Code** (`~/.claude/projects/**/*.jsonl`) and **Codex** (`~/.codex/sessions/**/*.jsonl`).
+1. Reads local logs from **Claude Code** (`~/.claude/projects/**/*.jsonl`), **Codex** (`~/.codex/sessions/**/*.jsonl`) and **Copilot CLI** (`~/.copilot/`, experimental).
 2. Computes real cost from a bundled pricing table (Claude Code leaves cost out, so we calculate it — including cache-read/creation rates).
 3. Pairs spend with your local **git** activity (commits, lines kept) to estimate efficiency: cost per merged PR, per kept line, cache reuse.
 4. The **official ranked score** on the leaderboard is computed server-side from these aggregates (anti-gaming) — the CLI shows a local estimate.
 
-## Status
+## Sources
 
-Early. Claude Code is the anchor source; Codex is experimental (token tracking only exists in recent builds). Cursor (server-side billing) is not yet supported.
+| Tool | Support | Notes |
+|---|---|---|
+| **Claude Code** | ✅ full | the anchor — local JSONL with token usage |
+| **Codex CLI** | ✅ experimental | token tracking only in recent builds |
+| **Copilot CLI** | ⚠️ experimental | best-effort local-log parsing; format varies |
+| **Cursor** | ❌ not supported | billing is server-side; local data has no token/cost. (Teams: a Cursor Admin-API path is on the roadmap.) |
+
+Copilot/Codex sessions don't record a working directory, so they only count under `--all-projects` (the per-repo score needs a cwd).
 
 MIT © Bluu — part of [tokenwise.dev](https://tokenwise.dev)
