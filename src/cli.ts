@@ -11,7 +11,7 @@ import { renderReport, renderCardSVG, c } from './render.js';
 import { SUBMISSIONS_URL, LEADERBOARD_URL, SUPABASE_ANON_KEY, SITE_URL, TOKEN_REFRESH_URL } from './config.js';
 import { login, clearCredentials, loadCredentials, getValidAccessToken } from './auth.js';
 
-const VERSION = '0.2.0';
+const VERSION = '0.3.1';
 
 interface Flags {
   cmd: string;
