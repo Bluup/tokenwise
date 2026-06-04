@@ -1,0 +1,38 @@
+# Publish the Tokenwise CLI to npm on a version tag.
+# Same shape as copilot-platform's tag-triggered release, simplified for an npm
+# package (no matrix, no native builds).
+#
+# Setup (one time):
+#   1. Add an npm automation token as the repo secret `NPM_TOKEN`
+#      (npmjs.com → Access Tokens → Generate → Automation).
+#   2. Cut a release:  npm version patch && git push --follow-tags
+#      (the `v*` tag fires this workflow, which builds + publishes tokenwise-cli).
+
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: npm ci || npm install
+      - run: npm run build
+      - run: npm test --if-present
+
+      - run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

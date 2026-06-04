@@ -1,0 +1,12 @@
+# build output (rebuilt on publish)
+dist/
+
+# dependencies
+node_modules/
+
+# generated share card
+tokenwise-card.svg
+
+# logs / os
+*.log
+.DS_Store
