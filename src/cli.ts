@@ -9,7 +9,7 @@ import { buildPayload } from './privacy.js';
 import { renderReport, renderCardSVG, c } from './render.js';
 import { SUBMISSIONS_URL, LEADERBOARD_URL, SUPABASE_ANON_KEY } from './config.js';
 
-const VERSION = '0.1.0';
+const VERSION = '0.1.1';
 
 interface Flags {
   cmd: string;
@@ -17,6 +17,7 @@ interface Flags {
   handle: string;
   json: boolean;
   dryRun: boolean;
+  allProjects: boolean;
 }
 
 function parseArgs(argv: string[]): Flags {
@@ -26,11 +27,13 @@ function parseArgs(argv: string[]): Flags {
     handle: '@you',
     json: false,
     dryRun: false,
+    allProjects: false,
   };
   const rest: string[] = [];
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--all') flags.days = null;
+    else if (arg === '--all-projects') flags.allProjects = true;
     else if (arg === '--days') flags.days = Number.parseInt(argv[++i] ?? '30', 10) || 30;
     else if (arg === '--handle') flags.handle = argv[++i] ?? flags.handle;
     else if (arg === '--json') flags.json = true;
@@ -58,6 +61,7 @@ const HELP = `
   ${c.dim('Options')}
     --days <n>        Window in days (default: 30)
     --all             All-time, no window
+    --all-projects    Score across every project (default: just this repo)
     --handle <@x>     Handle for your shareable card
     --json            Output raw JSON
     --dry-run         Preview the aggregate without uploading
@@ -75,7 +79,7 @@ function buildReport(flags: Flags) {
     gitStats,
     cwd: process.cwd(),
   });
-  return useCase.execute({ days: flags.days });
+  return useCase.execute({ days: flags.days, allProjects: flags.allProjects });
 }
 
 async function main(): Promise<number> {
@@ -176,8 +180,18 @@ async function main(): Promise<number> {
         body: JSON.stringify(row),
       });
       if (!res.ok) {
-        const detail = await res.text().catch(() => '');
-        process.stdout.write(`  ${c.red('✗')} Submit failed: ${res.status} ${res.statusText} ${c.dim(detail)}\n\n`);
+        const body = await res.text().catch(() => '');
+        let msg = body;
+        try {
+          msg = (JSON.parse(body) as { message?: string }).message ?? body;
+        } catch {
+          /* not JSON */
+        }
+        if (/rate_limited/.test(msg)) {
+          process.stdout.write(`  ${c.dim('⏳ ' + msg.replace('rate_limited: ', ''))}\n\n`);
+          return 0;
+        }
+        process.stdout.write(`  ${c.red('✗')} Submit failed: ${res.status} ${c.dim(msg)}\n\n`);
         return 1;
       }
 

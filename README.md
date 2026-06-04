@@ -31,7 +31,11 @@ npx tokenwise-cli
 | `tokenwise share` | Write a shareable card to `./tokenwise-card.svg` |
 | `tokenwise submit --handle @you` | Preview the exact anonymized aggregate, then post it to the leaderboard |
 
-Options: `--days <n>` (default 30), `--all`, `--handle <@you>`, `--json`, `--dry-run`.
+Options: `--days <n>` (default 30), `--all`, `--all-projects`, `--handle <@you>`, `--json`, `--dry-run`.
+
+**Scope:** by default the score is for the **current repo** — usage is scoped (by each
+session's working directory) to the repo you run it in, so "cost per commit" lines up
+with that repo's commits. Add `--all-projects` for your global spend across everything.
 
 `submit` posts your anonymized aggregate straight to the leaderboard (Supabase
 PostgREST, anon key bundled). The official score is computed in the database, so

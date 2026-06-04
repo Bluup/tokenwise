@@ -31,6 +31,10 @@ export function renderReport(r: Report): string {
   const a = r.aggregate;
   const e = r.efficiency;
   const window = r.days === null ? 'all time' : `last ${r.days} days`;
+  const scope =
+    r.scope === 'project'
+      ? `this project${r.git.repo ? ' · ' + r.git.repo.split('/').pop() : ''}`
+      : 'all projects';
   const lines: string[] = [];
 
   lines.push('');
@@ -38,14 +42,18 @@ export function renderReport(r: Report): string {
   lines.push('');
 
   if (a.events === 0) {
-    lines.push(`  ${c.dim(`No AI coding usage found for ${window}.`)}`);
-    lines.push(`  ${c.dim('Use Claude Code or Codex, then run this again.')}`);
+    lines.push(`  ${c.dim(`No AI coding usage found for ${scope} (${window}).`)}`);
+    lines.push(
+      r.scope === 'project'
+        ? `  ${c.dim('Run inside a repo where you use AI, or add')} ${c.bold('--all-projects')}${c.dim('.')}`
+        : `  ${c.dim('Use Claude Code or Codex, then run this again.')}`,
+    );
     lines.push('');
     return lines.join('\n');
   }
 
   // Efficiency score headline
-  lines.push(`  ${c.dim('EFFICIENCY SCORE')}  ${c.dim(`(local estimate · ${window})`)}`);
+  lines.push(`  ${c.dim('EFFICIENCY SCORE')}  ${c.dim(`(local estimate · ${scope} · ${window})`)}`);
   lines.push(`  ${c.bold(c.white(String(e.score)))}${c.dim('/100')}  ${bar(e.score)}`);
   lines.push('');
 
