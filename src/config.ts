@@ -6,6 +6,10 @@ export const SUPABASE_URL =
 export const SUPABASE_ANON_KEY =
   process.env.TOKENWISE_SUPABASE_ANON_KEY ?? 'sb_publishable_nrJDq0_MfFdZDRZfgXHYQA_4Bs7U3GI';
 
-/** PostgREST endpoints we use. */
+/** Public site that hosts the /cli-auth bridge for `tokenwise login`. */
+export const SITE_URL = process.env.TOKENWISE_SITE ?? 'https://tokenwise.dev';
+
+/** PostgREST + auth endpoints we use. */
 export const SUBMISSIONS_URL = `${SUPABASE_URL}/rest/v1/tw_submissions`;
 export const LEADERBOARD_URL = `${SUPABASE_URL}/rest/v1/tw_leaderboard`;
+export const TOKEN_REFRESH_URL = `${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`;

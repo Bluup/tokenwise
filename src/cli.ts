@@ -7,9 +7,10 @@ import { gitStats } from './git.js';
 import { CollectUsageUseCase } from './usecases/CollectUsageUseCase.js';
 import { buildPayload } from './privacy.js';
 import { renderReport, renderCardSVG, c } from './render.js';
-import { SUBMISSIONS_URL, LEADERBOARD_URL, SUPABASE_ANON_KEY } from './config.js';
+import { SUBMISSIONS_URL, LEADERBOARD_URL, SUPABASE_ANON_KEY, SITE_URL, TOKEN_REFRESH_URL } from './config.js';
+import { login, clearCredentials, loadCredentials, getValidAccessToken } from './auth.js';
 
-const VERSION = '0.1.2';
+const VERSION = '0.2.0';
 
 interface Flags {
   cmd: string;
@@ -57,6 +58,9 @@ const HELP = `
     score             Print just your efficiency score
     share             Write a shareable card to ./tokenwise-card.svg
     submit            Preview the anonymized aggregate, then upload (opt-in)
+    login             Verify your handle with GitHub (browser)
+    logout            Remove your saved login
+    whoami            Show your verified GitHub handle
 
   ${c.dim('Options')}
     --days <n>        Window in days (default: 30)
@@ -91,6 +95,36 @@ async function main(): Promise<number> {
   }
   if (flags.cmd === 'help') {
     process.stdout.write(`${HELP}\n`);
+    return 0;
+  }
+
+  if (flags.cmd === 'login') {
+    try {
+      const { login: gh } = await login(SITE_URL);
+      process.stdout.write(
+        `  ${c.wise('✓')} Logged in as ${c.bold('@' + gh)}. Your submits are now GitHub-verified.\n` +
+          `  ${c.dim('Run')} ${c.bold('npx tokenwise-cli submit')} ${c.dim('— your handle is locked to @' + gh + '.')}\n\n`,
+      );
+      return 0;
+    } catch (err) {
+      process.stdout.write(`\n  ${c.red('✗')} Login failed: ${(err as Error).message}\n\n`);
+      return 1;
+    }
+  }
+
+  if (flags.cmd === 'logout') {
+    clearCredentials();
+    process.stdout.write(`  ${c.dim('Logged out.')}\n`);
+    return 0;
+  }
+
+  if (flags.cmd === 'whoami') {
+    const creds = loadCredentials();
+    process.stdout.write(
+      creds
+        ? `  ${c.wise('@' + creds.login)} ${c.dim('(GitHub-verified)')}\n`
+        : `  ${c.dim('Not logged in. Run')} ${c.bold('npx tokenwise-cli login')}${c.dim('.')}\n`,
+    );
     return 0;
   }
 
@@ -133,10 +167,18 @@ async function main(): Promise<number> {
       process.stdout.write(renderReport(report));
       return 0;
     }
+    // Use a GitHub-verified session if logged in — the handle is then locked to
+    // your GitHub login and the entry is marked verified.
+    const creds = loadCredentials();
+    const authToken = creds
+      ? await getValidAccessToken(creds, { refreshUrl: TOKEN_REFRESH_URL, anonKey: SUPABASE_ANON_KEY })
+      : null;
+    const effectiveHandle = authToken && creds ? `@${creds.login}` : flags.handle;
+
     const payload = buildPayload(report.aggregate, report.efficiency, report.git, {
       clientVersion: VERSION,
       days: flags.days,
-      handle: flags.handle,
+      handle: effectiveHandle,
     });
 
     // Always show exactly what would be uploaded — trust is the product.
@@ -147,18 +189,19 @@ async function main(): Promise<number> {
       process.stdout.write(`  ${c.dim('Dry run — nothing uploaded. Drop --dry-run to submit.')}\n\n`);
       return 0;
     }
-    if (flags.handle === '@you') {
+    if (!authToken && flags.handle === '@you') {
       process.stdout.write(
-        `  ${c.dim('Pass')} ${c.bold('--handle @yourname')} ${c.dim('to claim your spot on the leaderboard.')}\n\n`,
+        `  ${c.dim('Pass')} ${c.bold('--handle @you')} ${c.dim('to claim a spot — or')} ${c.bold('npx tokenwise-cli login')} ${c.dim('for a GitHub-verified entry.')}\n\n`,
       );
       return 0;
     }
 
-    // Insert raw aggregates; the DB trigger computes the official score.
+    // Insert raw aggregates; the DB trigger computes the official score (and, when
+    // authenticated, locks the handle to your GitHub login + marks it verified).
     const headers = {
       'content-type': 'application/json',
       apikey: SUPABASE_ANON_KEY,
-      authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      authorization: `Bearer ${authToken ?? SUPABASE_ANON_KEY}`,
       Prefer: 'return=minimal',
     };
     const row = {
@@ -203,7 +246,7 @@ async function main(): Promise<number> {
         if (lb.ok) {
           const rows = (await lb.json()) as Array<{ rank: number; score: number }>;
           const me = rows[0];
-          if (me) line = `  ${c.wise('✓')} Official score ${c.bold(String(me.score))}${c.dim('/100')} · rank ${c.bold('#' + me.rank)} on the efficiency leaderboard.`;
+          if (me) line = `  ${c.wise('✓')} Official score ${c.bold(String(me.score))}${c.dim('/100')} · rank ${c.bold('#' + me.rank)}${authToken ? c.dim(' · verified') : ''}.`;
         }
       } catch {
         /* rank lookup is best-effort */
